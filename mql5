@@ -1,0 +1,63 @@
+
+// Euro Storm Software - Grid Trading Robot
+
+// Include necessary libraries
+#include <Trade\Trade.mqh>
+#include <MqlRates.mqh>
+
+// Define global variables
+double LotSize = 0.01;
+double GridStep = 10.0;
+double TakeProfit = 100.0;
+double StopLoss = 50.0;
+int MaxGridLevel = 5;
+
+// Define grid trading function
+void GridTrade()
+{
+    // Get current bid price
+    double currentBid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+
+    // Calculate grid levels
+    double gridLevel = MathFloor(currentBid / GridStep);
+
+    // Calculate trade volume based on grid level
+    double tradeVolume = LotSize * MathPow(2, gridLevel);
+
+    // Calculate stop loss and take profit levels
+    double slLevel = currentBid - StopLoss * _Point;
+    double tpLevel = currentBid + TakeProfit * _Point;
+
+    // Open a buy position at grid level
+    if(gridLevel <= MaxGridLevel && !PositionSelect(_Symbol))
+    {
+        if(OrderSend(_Symbol, OP_BUY, tradeVolume, currentBid, 0, slLevel, tpLevel, 'Grid Buy', 0, 0, clrGreen))
+        {
+            Print('Buy order opened at ', currentBid);
+        }
+        else
+        {
+            Print('Failed to open buy order');
+        }
+    }
+
+    // Open a sell position at grid level
+    if(gridLevel >= -MaxGridLevel && !PositionSelect(_Symbol))
+    {
+        if(OrderSend(_Symbol, OP_SELL, tradeVolume, currentBid, 0, slLevel, tpLevel, 'Grid Sell', 0, 0, clrRed))
+        {
+            Print('Sell order opened at ', currentBid);
+        }
+        else
+        {
+            Print('Failed to open sell order');
+        }
+    }
+}
+
+// Define start function
+void OnStart()
+{
+    // Enable grid trading
+    GridTrade();
+}
